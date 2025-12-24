@@ -1,57 +1,80 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { 
+  ReactFlow, 
+  Background, 
+  Controls, 
+  useNodesState, 
+  useEdgesState, 
+  addEdge,
+  Connection,
+  Edge,
+  Position,
+  Node
+} from "@xyflow/react";
+
+import "@xyflow/react/dist/style.css";
 import "./App.css";
 
 interface AudioDevice {
-  name: String;
-  device_type: String;
+  name: string;
+  device_type: "Input" | "Output";
 }
 
-function App() {
-  const [devices, setDevices] = useState<AudioDevice[]>([]);
+export default function App() {
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+
+  const onConnect = useCallback(
+    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    [setEdges],
+  );
 
   useEffect(() => {
-    async function fetchDevices() {
-      try {
-        console.log("Chamando o Rust...");
-        const result = await invoke<AudioDevice[]>("get_audio_devices");
-        console.log("Rust respondeu:", result);
-        setDevices(result);
-      } catch (error) {
-        console.error("Erro ao buscar dispositivos:", error);
-      }
+    async function setupDevices() {
+      const devices = await invoke<AudioDevice[]>("get_audio_devices");
+      
+      const newNodes: Node[] = devices.map((dev, index) => {
+        const isInput = dev.device_type === "Input";
+        const xPos = isInput ? 50 : 500;
+        const yPos = index * 100 + 50;
+
+        return {
+          id: `${dev.device_type}-${index}`, 
+          type: 'input', 
+          data: { label: dev.name }, 
+          position: { x: xPos, y: yPos },
+          style: { 
+            background: '#1a1a1a', 
+            color: '#fff', 
+            border: isInput ? '2px solid #ff4081' : '2px solid #00e5ff',
+            width: 250,
+          },
+          sourcePosition: isInput ? Position.Right : Position.Right, 
+          targetPosition: isInput ? Position.Left : Position.Left,   
+        };
+      });
+      
+      setNodes(newNodes);
     }
 
-    fetchDevices();
-  }, []);
+    setupDevices();
+  }, [setNodes]);
 
   return (
-    <div className="container">
-      <h1>🎛️ AudioFlux 1.14</h1>
-      
-      <div className="device-list">
-        <h2>Meus Dispositivos:</h2>
-        
-        {devices.length === 0 ? (
-          <p>Carregando ou nenhum dispositivo encontrado...</p>
-        ) : (
-          <ul style={{ listStyle: "none", padding: 0 }}>
-            {devices.map((dev, index) => (
-              <li key={index} style={{ 
-                background: "#333", 
-                margin: "10px", 
-                padding: "10px", 
-                borderRadius: "8px",
-                borderLeft: dev.device_type === "Input" ? "5px solid #ff4081" : "5px solid #00e5ff"
-              }}>
-                <strong>{dev.device_type === "Input" ? "🎤 Mic" : "🔊 Som"}:</strong> {dev.name}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+    <div style={{ width: "100vw", height: "100vh", background: "#000" }}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        colorMode="dark"
+        fitView
+      >
+        <Background color="#333" gap={20} />
+        <Controls />
+      </ReactFlow>
     </div>
   );
 }
-
-export default App;
