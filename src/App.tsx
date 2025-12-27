@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react"; // <--- Add useMemo
+import { useEffect, useCallback, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { 
   ReactFlow, 
@@ -13,16 +13,27 @@ import {
 
 import "@xyflow/react/dist/style.css";
 import "./App.css";
-import DeviceNode from "./components/DeviceNode"; // <--- Importamos nosso componente
+
+import DeviceNode from "./components/DeviceNode";
+import AppNode from "./components/AppNode";
 
 interface AudioDevice {
   name: string;
   device_type: "Input" | "Output";
 }
 
+interface AppSession {
+  pid: number;
+  name: string;
+  volume: number;
+  is_muted: boolean;
+}
+
 export default function App() {
-  // Configura os tipos de nós personalizados (useMemo para performance)
-  const nodeTypes = useMemo(() => ({ device: DeviceNode }), []);
+  const nodeTypes = useMemo(() => ({ 
+    device: DeviceNode,
+    app: AppNode 
+  }), []);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -33,31 +44,50 @@ export default function App() {
   );
 
   useEffect(() => {
-    async function setupDevices() {
+    async function loadEverything() {
       const devices = await invoke<AudioDevice[]>("get_audio_devices");
       
-      const newNodes: Node[] = devices.map((dev, index) => {
+      const apps = await invoke<AppSession[]>("get_audio_sessions");
+
+      const loadedNodes: Node[] = [];
+
+      devices.forEach((dev, index) => {
         const isInput = dev.device_type === "Input";
         
-        // Posições iniciais
-        const xPos = isInput ? 100 : 600; // Afastei um pouco mais
-        const yPos = index * 150 + 50;    // Aumentei o espaço vertical
+        const xPos = isInput ? 0 : 900;
+        const yPos = index * 160 + 50;
 
-        return {
-          id: `${dev.device_type}-${index}`, 
-          type: 'device', // <--- MUDANÇA IMPORTANTE: Usamos nosso tipo 'device'
+        loadedNodes.push({
+          id: `dev-${dev.name}-${index}`,
+          type: 'device',
           data: { 
             label: dev.name,
-            deviceType: dev.device_type // Passamos o tipo para mudar a cor
+            deviceType: dev.device_type 
           }, 
           position: { x: xPos, y: yPos },
-        };
+        });
+      });
+
+      apps.forEach((app, index) => {
+        loadedNodes.push({
+          id: `app-${app.pid}`,
+          type: 'app',
+          data: { 
+            label: app.name,
+            pid: app.pid,
+            initialVolume: app.volume
+          },
+          position: { x: 450, y: index * 160 + 50 },
+        });
       });
       
-      setNodes(newNodes);
+      setNodes(loadedNodes);
     }
 
-    setupDevices();
+    loadEverything();
+    const interval = setInterval(loadEverything, 5000);
+    return () => clearInterval(interval);
+
   }, [setNodes]);
 
   return (
@@ -65,14 +95,14 @@ export default function App() {
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        nodeTypes={nodeTypes} // <--- Passamos os tipos personalizados aqui
+        nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         colorMode="dark"
         fitView
       >
-        <Background color="#111" gap={25} />
+        <Background color="#111" gap={30} />
         <Controls />
       </ReactFlow>
     </div>

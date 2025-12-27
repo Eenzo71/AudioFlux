@@ -1,6 +1,6 @@
 [package]
 name = "audio-flux"
-version = "1.14.0"
+version = "1.14.4"
 description = "A next-gen virtual audio mixer"
 authors = ["Enzo"]
 edition = "2021"
@@ -10,16 +10,27 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = [] }
-tauri-plugin-opener = "2" 
+tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-
-# Áudio:
-cpal = "0.15"   
-rodio = "0.18" 
-tokio = { version = "1", features = ["full"] }
 anyhow = "1.0"
+tokio = { version = "1", features = ["full"] }
 uuid = { version = "1.10", features = ["v4", "serde"] }
+cpal = "0.15"
+rodio = "0.18"
+
+sysinfo = "0.30"
+
+windows = { version = "0.54.0", features = [
+    "Win32_Media_Audio",
+    "Win32_Media_Audio_Endpoints",
+    "Win32_System_Com",
+    "Win32_System_Com_StructuredStorage",
+    "Win32_UI_Shell_PropertiesSystem",
+    # ESSAS DUAS ESTAVAM FALTANDO NO SEU ARQUIVO:
+    "Win32_System_Variant",
+    "Win32_Devices_FunctionDiscovery"
+] }
 
 [lib]
 name = "audio_flux_lib"
