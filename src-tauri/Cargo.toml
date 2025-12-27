@@ -1,6 +1,6 @@
 [package]
 name = "audio-flux"
-version = "1.14.4"
+version = "1.15.0"
 description = "A next-gen virtual audio mixer"
 authors = ["Enzo"]
 edition = "2021"
@@ -13,13 +13,17 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
 anyhow = "1.0"
 tokio = { version = "1", features = ["full"] }
 uuid = { version = "1.10", features = ["v4", "serde"] }
-cpal = "0.15"
-rodio = "0.18"
 
 sysinfo = "0.30"
+image = "0.24"
+base64 = "0.21"
+
+cpal = "0.15"
+rodio = "0.18"
 
 windows = { version = "0.54.0", features = [
     "Win32_Media_Audio",
@@ -27,9 +31,12 @@ windows = { version = "0.54.0", features = [
     "Win32_System_Com",
     "Win32_System_Com_StructuredStorage",
     "Win32_UI_Shell_PropertiesSystem",
-    # ESSAS DUAS ESTAVAM FALTANDO NO SEU ARQUIVO:
     "Win32_System_Variant",
-    "Win32_Devices_FunctionDiscovery"
+    "Win32_Devices_FunctionDiscovery",
+    "Win32_UI_Shell",                
+    "Win32_UI_WindowsAndMessaging",  
+    "Win32_Graphics_Gdi",             
+    "Win32_Storage_FileSystem"
 ] }
 
 [lib]
