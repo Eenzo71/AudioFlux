@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react"; // <--- Add useMemo
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { 
   ReactFlow, 
@@ -13,7 +13,7 @@ import {
 
 import "@xyflow/react/dist/style.css";
 import "./App.css";
-import DeviceNode from "./components/DeviceNode"; // <--- Importamos nosso componente
+import DeviceNode from "./components/DeviceNode";
 
 interface AudioDevice {
   name: string;
@@ -21,7 +21,6 @@ interface AudioDevice {
 }
 
 export default function App() {
-  // Configura os tipos de nós personalizados (useMemo para performance)
   const nodeTypes = useMemo(() => ({ device: DeviceNode }), []);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -39,16 +38,15 @@ export default function App() {
       const newNodes: Node[] = devices.map((dev, index) => {
         const isInput = dev.device_type === "Input";
         
-        // Posições iniciais
-        const xPos = isInput ? 100 : 600; // Afastei um pouco mais
-        const yPos = index * 150 + 50;    // Aumentei o espaço vertical
+        const xPos = isInput ? 100 : 600;
+        const yPos = index * 150 + 50;
 
         return {
           id: `${dev.device_type}-${index}`, 
-          type: 'device', // <--- MUDANÇA IMPORTANTE: Usamos nosso tipo 'device'
+          type: 'device', 
           data: { 
             label: dev.name,
-            deviceType: dev.device_type // Passamos o tipo para mudar a cor
+            deviceType: dev.device_type
           }, 
           position: { x: xPos, y: yPos },
         };
@@ -65,7 +63,7 @@ export default function App() {
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        nodeTypes={nodeTypes} // <--- Passamos os tipos personalizados aqui
+        nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
